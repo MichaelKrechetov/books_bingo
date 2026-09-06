@@ -6,47 +6,63 @@
     <title>Книжкове Бінго</title>
     <style>
         * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
-        body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; margin: 0; background-color: #f4f4f9; padding: 15px; }
-        h1 { margin: 0 0 5px 0; font-size: 1.4rem; text-align: center; }
-        .info { margin-bottom: 15px; color: #666; font-size: 0.85rem; text-align: center; }
+        body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; margin: 0; background-color: #121212; color: #e0e0e0; padding: 15px; }
+        h1 { margin: 0 0 5px 0; font-size: 1.4rem; text-align: center; color: #fff; }
+        .info { margin-bottom: 20px; color: #aaa; font-size: 0.85rem; text-align: center; }
         
-        /* Сітка 6х6: 1 заголовок + 5 осередків */
-        .bingo-wrapper { position: relative; width: 100%; max-width: 650px; }
+        /* Головний контейнер: Таблиця + Лог справа */
+        .main-container { display: flex; flex-direction: row; gap: 20px; width: 100%; max-width: 950px; align-items: flex-start; }
+        
+        .bingo-wrapper { flex: 2; width: 100%; }
         .grid { display: grid; grid-template-columns: 30px repeat(5, 1fr); gap: 6px; width: 100%; }
         
-        .header-cell { display: flex; align-items: center; justify-content: center; font-weight: bold; color: #555; font-size: 0.9rem; }
+        .header-cell { display: flex; align-items: center; justify-content: center; font-weight: bold; color: #888; font-size: 0.9rem; }
         
-        .cell { background: #ffffff; border: 2px solid #ccc; border-radius: 6px; min-height: 90px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 6px; font-size: 0.75rem; font-weight: 500; cursor: pointer; user-select: none; transition: all 0.15s ease; word-break: break-word; position: relative; }
-        .cell:hover { border-color: #4a90e2; background-color: #f0f7ff; }
-        .cell.selected { background-color: #ff6b6b; color: white; border-color: #e63946; text-decoration: line-through; opacity: 0.85; }
+        .cell { background: #1e1e1e; border: 1px solid #333; border-radius: 6px; min-height: 90px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 6px; font-size: 0.75rem; font-weight: 500; cursor: pointer; user-select: none; transition: all 0.15s ease; word-break: break-word; color: #ddd; }
+        .cell:hover { border-color: #bb86fc; background-color: #2a2438; }
+        .cell.selected { background-color: #cf6679; color: #ffffff; border-color: #ff7597; text-decoration: line-through; opacity: 0.85; }
 
-        /* Вплипливаюча підказка (Tooltip) для ПК */
-        #tooltip { position: fixed; display: none; background: #333; color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; max-width: 280px; z-index: 1000; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); line-height: 1.3; }
+        /* Вплипливаюча підказка (Tooltip) */
+        #tooltip { position: fixed; display: none; background: #2c2c2c; color: #fff; padding: 10px 14px; border: 1px solid #444; border-radius: 8px; font-size: 0.9rem; max-width: 280px; z-index: 1000; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.5); line-height: 1.3; }
 
-        /* Блок логів */
-        .log-container { width: 100%; max-width: 650px; margin-top: 20px; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 10px; font-size: 0.8rem; color: #444; }
-        .log-title { font-weight: bold; margin-bottom: 5px; color: #333; }
-        .log-list { list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto; }
-        .log-list li { font-style: italic; margin-bottom: 3px; border-bottom: 1px dashed #eee; padding-bottom: 2px; }
+        /* Блок логів справа */
+        .log-container { flex: 1; width: 100%; min-width: 250px; background: #1e1e1e; border: 1px solid #333; border-radius: 6px; padding: 12px; font-size: 0.8rem; color: #ccc; display: flex; flex-direction: column; }
+        .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .log-title { font-weight: bold; color: #bb86fc; }
+        
+        /* Кнопка скидання */
+        .reset-btn { background: transparent; color: #cf6679; border: 1px solid #cf6679; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; transition: all 0.2s ease; }
+        .reset-btn:hover { background: #cf6679; color: #fff; }
 
-        @media (max-width: 500px) {
+        .log-list { list-style: none; padding: 0; margin: 0; max-height: 480px; overflow-y: auto; }
+        .log-list li { font-style: italic; margin-bottom: 4px; border-bottom: 1px dashed #2a2a2a; padding-bottom: 3px; color: #aaa; }
+
+        /* Адаптив під мобілки */
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; }
+            .log-list { max-height: 150px; }
             .cell { min-height: 70px; font-size: 0.65rem; padding: 3px; }
-            .grid { gap: 3px; grid-template-columns: 20px repeat(5, 1fr); }
+            .grid { gap: 4px; grid-template-columns: 20px repeat(5, 1fr); }
         }
     </style>
 </head>
 <body>
 
     <h1 id="player-title">Книжкове Бінго</h1>
-    <div class="info">Натисни, щоб закреслити/відкреслити. Наводиться підказка з повним текстом.</div>
+    <div class="info">Натисни, щоб закреслити/відкреслити. При наведенні мишкою видно повний текст.</div>
     
-    <div class="bingo-wrapper">
-        <div class="grid" id="bingo-board"></div>
-    </div>
+    <div class="main-container">
+        <div class="bingo-wrapper">
+            <div class="grid" id="bingo-board"></div>
+        </div>
 
-    <div class="log-container">
-        <div class="log-title">Історія дій:</div>
-        <ul class="log-list" id="log-list"></ul>
+        <div class="log-container">
+            <div class="log-header">
+                <span class="log-title">Історія дій:</span>
+                <button class="reset-btn" onclick="resetBoard()">Скинути</button>
+            </div>
+            <ul class="log-list" id="log-list"></ul>
+        </div>
     </div>
 
     <div id="tooltip"></div>
@@ -129,11 +145,16 @@
             renderLogs();
         }
 
-        // Рендер сітки 6х6
-        // Порожня верхня ліва клітинка
+        function resetBoard() {
+            if (confirm("Ви дійсно хочете скинути всі закреслення та історію для цієї картки?")) {
+                localStorage.removeItem(stateKey);
+                localStorage.removeItem(logKey);
+                location.reload();
+            }
+        }
+
         board.appendChild(document.createElement('div'));
         
-        // Букви A-E
         COLS.forEach(col => {
             const h = document.createElement('div');
             h.classList.add('header-cell');
@@ -143,7 +164,6 @@
 
         let qIndex = 0;
         for (let r = 0; r < 5; r++) {
-            // Цифра рядка
             const rHeader = document.createElement('div');
             rHeader.classList.add('header-cell');
             rHeader.innerText = ROWS[r];
@@ -160,7 +180,6 @@
 
                 if (savedState[index]) cell.classList.add('selected');
 
-                // Ховер підказка
                 cell.addEventListener('mousemove', (e) => {
                     tooltip.style.display = 'block';
                     tooltip.innerText = `[${coord}] ${qText}`;
@@ -172,7 +191,6 @@
                     tooltip.style.display = 'none';
                 });
 
-                // Клік (закреслити / відкреслити)
                 cell.addEventListener('click', () => {
                     const isSelected = cell.classList.toggle('selected');
                     savedState[index] = isSelected;
