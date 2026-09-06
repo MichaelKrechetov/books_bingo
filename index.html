@@ -3,85 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Інтерактивне Бінго</title>
+    <title>Книжкове Бінго</title>
     <style>
         * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
-        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: #f4f4f9; padding: 10px; }
-        h1 { margin-bottom: 5px; font-size: 1.5rem; text-align: center; }
-        .info { margin-bottom: 15px; color: #555; font-size: 0.9rem; }
-        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; width: 100%; max-width: 600px; aspect-ratio: 1 / 1; }
-        .cell { background: #ffffff; border: 2px solid #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 5px; font-size: 0.85rem; font-weight: bold; cursor: pointer; user-select: none; transition: all 0.2s ease; word-break: break-word; }
-        .cell:hover { border-color: #888; }
-        .cell.selected { background-color: #ff6b6b; color: white; border-color: #e63946; text-decoration: line-through; opacity: 0.8; }
-        @media (max-width: 480px) { .cell { font-size: 0.7rem; padding: 2px; } }
+        body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; margin: 0; background-color: #f4f4f9; padding: 15px; }
+        h1 { margin: 0 0 5px 0; font-size: 1.4rem; text-align: center; }
+        .info { margin-bottom: 15px; color: #666; font-size: 0.85rem; text-align: center; }
+        
+        /* Сітка 6х6: 1 заголовок + 5 осередків */
+        .bingo-wrapper { position: relative; width: 100%; max-width: 650px; }
+        .grid { display: grid; grid-template-columns: 30px repeat(5, 1fr); gap: 6px; width: 100%; }
+        
+        .header-cell { display: flex; align-items: center; justify-content: center; font-weight: bold; color: #555; font-size: 0.9rem; }
+        
+        .cell { background: #ffffff; border: 2px solid #ccc; border-radius: 6px; min-height: 90px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 6px; font-size: 0.75rem; font-weight: 500; cursor: pointer; user-select: none; transition: all 0.15s ease; word-break: break-word; position: relative; }
+        .cell:hover { border-color: #4a90e2; background-color: #f0f7ff; }
+        .cell.selected { background-color: #ff6b6b; color: white; border-color: #e63946; text-decoration: line-through; opacity: 0.85; }
+
+        /* Вплипливаюча підказка (Tooltip) для ПК */
+        #tooltip { position: fixed; display: none; background: #333; color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; max-width: 280px; z-index: 1000; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); line-height: 1.3; }
+
+        /* Блок логів */
+        .log-container { width: 100%; max-width: 650px; margin-top: 20px; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 10px; font-size: 0.8rem; color: #444; }
+        .log-title { font-weight: bold; margin-bottom: 5px; color: #333; }
+        .log-list { list-style: none; padding: 0; margin: 0; max-height: 120px; overflow-y: auto; }
+        .log-list li { font-style: italic; margin-bottom: 3px; border-bottom: 1px dashed #eee; padding-bottom: 2px; }
+
+        @media (max-width: 500px) {
+            .cell { min-height: 70px; font-size: 0.65rem; padding: 3px; }
+            .grid { gap: 3px; grid-template-columns: 20px repeat(5, 1fr); }
+        }
     </style>
 </head>
 <body>
 
-    <h1 id="player-title">Картка Бінго</h1>
-    <div class="info">Натискайте на клітинку, щоб закреслити її</div>
-    <div class="grid" id="bingo-board"></div>
+    <h1 id="player-title">Книжкове Бінго</h1>
+    <div class="info">Натисни, щоб закреслити/відкреслити. Наводиться підказка з повним текстом.</div>
+    
+    <div class="bingo-wrapper">
+        <div class="grid" id="bingo-board"></div>
+    </div>
+
+    <div class="log-container">
+        <div class="log-title">Історія дій:</div>
+        <ul class="log-list" id="log-list"></ul>
+    </div>
+
+    <div id="tooltip"></div>
 
     <script>
-        // 1. Впишіть сюди рівно 25 питань
         const QUESTIONS = [
-            "Питання 1", "Питання 2", "Питання 3", "Питання 4", "Питання 5",
-            "Питання 6", "Питання 7", "Питання 8", "Питання 9", "Питання 10",
-            "Питання 11", "Питання 12", "Питання 13", "Питання 14", "Питання 15",
-            "Питання 16", "Питання 17", "Питання 18", "Питання 19", "Питання 20",
-            "Питання 21", "Питання 22", "Питання 23", "Питання 24", "Питання 25"
+            "1. Книга, яка змусила тебе сміятися в голос або плакати",
+            "2. Персонаж, у якого ти була закохана в дитинстві або в підлітковому віці",
+            "3. Книга, яку тобі соромно зізнатися, що ти НЕ читала",
+            "4. Найкраща книга, яку ти читала за останній рік",
+            "5. Як ти обираєш книжки, які хочеш прочитати?",
+            "6. Книга з дитинства, яка сформувала тебе як читачку",
+            "7. Твоя улюблена тема для читання",
+            "8. Книга, яку ти кинула, не дочитавши та чому?",
+            "9. Твій головний читацький тригер",
+            "10. Книга, яку ти перечитувала два або більше разів",
+            "11. Екранізація, яка надихнула тебе прочитати книгу або навпаки",
+            "12. Твій улюблений формат читання: паперові, електронні, аудіокниги та чому?",
+            "13. Твоя улюблена книга всіх часів",
+            "14. Книга, яка, на твій погляд, не виправдала свою популярність",
+            "15. Твоя кумедна або незвична читацька звичка (писати в книгах, нюхати сторінки, тощо)",
+            "16. Книга, від якої не могла відірватися, поки не дочитала",
+            "17. Чи була ти раніше в іншому книжковому клубі?",
+            "18. Книга, яку тобі порадила інша людина, і це виявилося 100% влучання",
+            "19. Якщо дивишся книжкових блогерів, порекомендуй канал, який тобі подобається?",
+            "20. Книга, яка тебе змінила",
+            "21. Книга, яку купила/читала суто через красиву обкладинку",
+            "22. Розкажи цікаву історію, пов'язану з будь-якою книгою",
+            "23. Книга, яку б ти обов'язково хотіла порадити прочитати кожній в цьому клубі",
+            "24. Книга, яку соромно зізнатися, що читала",
+            "25. Твоє ставлення до спойлерів до книжок"
         ];
 
-        // Зчитування ID гравця з URL (наприклад: ?player=1)
+        const COLS = ['A', 'B', 'C', 'D', 'E'];
+        const ROWS = ['1', '2', '3', '4', '5'];
+
         const urlParams = new URLSearchParams(window.location.search);
         const playerId = parseInt(urlParams.get('player')) || 1;
-        document.getElementById('player-title').innerText = `Картка Гравця №${playerId}`;
+        document.getElementById('player-title').innerText = `Книжкове Бінго — Гравець №${playerId}`;
 
-        // Генератор псевдовипадкових чисел на основі ID гравця (Math.sin seed)
         function seededRandom(seed) {
             let x = Math.sin(seed++) * 10000;
             return x - Math.floor(x);
         }
 
-        // Перемішування масиву за алгоритмом Фішера-Єйтса із зафіксованим seed
         function shuffle(array, seed) {
-            let m = array.length, t, i;
-            let currentSeed = seed;
-            let arr = [...array];
+            let m = array.length, t, i, currentSeed = seed, arr = [...array];
             while (m) {
                 i = Math.floor(seededRandom(currentSeed++) * m--);
-                t = arr[m];
-                arr[m] = arr[i];
-                arr[i] = t;
+                t = arr[m]; arr[m] = arr[i]; arr[i] = t;
             }
             return arr;
         }
 
-        const shuffledQuestions = shuffle(QUESTIONS, playerId * 999);
+        const shuffledQuestions = shuffle(QUESTIONS, playerId * 777);
         const board = document.getElementById('bingo-board');
-        const storageKey = `bingo_player_${playerId}_state`;
+        const tooltip = document.getElementById('tooltip');
+        const logList = document.getElementById('log-list');
 
-        // Зчитування збереженого стану закреслень
-        let savedState = JSON.parse(localStorage.getItem(storageKey)) || Array(25).fill(false);
+        const stateKey = `bingo_p${playerId}_state`;
+        const logKey = `bingo_p${playerId}_logs`;
 
-        // Генерація сітки
-        shuffledQuestions.forEach((qText, index) => {
-            const cell = document.createElement('div');
-            cell.classList.add('cell');
-            cell.innerText = qText;
+        let savedState = JSON.parse(localStorage.getItem(stateKey)) || Array(25).fill(false);
+        let savedLogs = JSON.parse(localStorage.getItem(logKey)) || [];
 
-            if (savedState[index]) {
-                cell.classList.add('selected');
-            }
-
-            cell.addEventListener('click', () => {
-                cell.classList.toggle('selected');
-                savedState[index] = cell.classList.contains('selected');
-                localStorage.setItem(storageKey, JSON.stringify(savedState));
+        function renderLogs() {
+            logList.innerHTML = '';
+            savedLogs.slice().reverse().forEach(logText => {
+                const li = document.createElement('li');
+                li.innerText = logText;
+                logList.appendChild(li);
             });
+        }
 
-            board.appendChild(cell);
+        function addLog(action, coord) {
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const entry = `${time} player${playerId} ${action} ячейку ${coord}`;
+            savedLogs.push(entry);
+            localStorage.setItem(logKey, JSON.stringify(savedLogs));
+            renderLogs();
+        }
+
+        // Рендер сітки 6х6
+        // Порожня верхня ліва клітинка
+        board.appendChild(document.createElement('div'));
+        
+        // Букви A-E
+        COLS.forEach(col => {
+            const h = document.createElement('div');
+            h.classList.add('header-cell');
+            h.innerText = col;
+            board.appendChild(h);
         });
+
+        let qIndex = 0;
+        for (let r = 0; r < 5; r++) {
+            // Цифра рядка
+            const rHeader = document.createElement('div');
+            rHeader.classList.add('header-cell');
+            rHeader.innerText = ROWS[r];
+            board.appendChild(rHeader);
+
+            for (let c = 0; c < 5; c++) {
+                const index = qIndex;
+                const coord = `${COLS[c]}${ROWS[r]}`;
+                const qText = shuffledQuestions[index];
+
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.innerText = qText;
+
+                if (savedState[index]) cell.classList.add('selected');
+
+                // Ховер підказка
+                cell.addEventListener('mousemove', (e) => {
+                    tooltip.style.display = 'block';
+                    tooltip.innerText = `[${coord}] ${qText}`;
+                    tooltip.style.left = e.clientX + 15 + 'px';
+                    tooltip.style.top = e.clientY + 15 + 'px';
+                });
+
+                cell.addEventListener('mouseleave', () => {
+                    tooltip.style.display = 'none';
+                });
+
+                // Клік (закреслити / відкреслити)
+                cell.addEventListener('click', () => {
+                    const isSelected = cell.classList.toggle('selected');
+                    savedState[index] = isSelected;
+                    localStorage.setItem(stateKey, JSON.stringify(savedState));
+                    
+                    addLog(isSelected ? 'закреслив' : 'відкреслив', coord);
+                });
+
+                board.appendChild(cell);
+                qIndex++;
+            }
+        }
+
+        renderLogs();
     </script>
 </body>
 </html>
